@@ -6,13 +6,13 @@
 
 ## Initial decisions (before coding)
 
-- [ ] **S0 — Inspect inputs and agree on conventions.** Confirm that the PDF is available in the working directory. Confirm Python environment and only necessary dependencies. Choose a reference genome (default proposal: lambda bacteriophage `NC_001416.1`). Decide and record minimal conventions where the assignment is silent: ORF length units and translation terminator, handling ambiguous symbols, output format for gene report, output structure for RNA-seq, basic statistical defaults. Do not implement anything at this stage.
+- [x] **S0 — Inspect inputs and agree on conventions.** Confirm that the PDF is available in the working directory. Confirm Python environment and only necessary dependencies. Choose a reference genome (default proposal: lambda bacteriophage `NC_001416.1`). Decide and record minimal conventions where the assignment is silent: ORF length units and translation terminator, handling ambiguous symbols, output format for gene report, output structure for RNA-seq, basic statistical defaults. Do not implement anything at this stage.
 
 In every stage below: **propose → obtain approval → implement only that stage → verify → explain → await acceptance**. Mark a checkbox only after acceptance.
 
 ### S0 — approved conventions and inspection findings
 
-The student approved recording the following approach. These are project conventions where the PDF leaves a choice, not additional assignment requirements. S0 awaits acceptance of this recorded result; its checkbox remains unchecked. Approval of these conventions does not authorize implementation of later stages.
+The student accepted S0 and separately approved environment setup and A1.1. These are project conventions where the PDF leaves a choice, not additional assignment requirements. Later stages still require their own approval.
 
 - **Inputs:** `Bioinformatics_Project_1.pdf` is present, and all three pages have been read alongside `AGENTS.md` and this plan.
 - **Environment:** Python 3.12.14 runs at `D:\Anaconda\envs\ds-semester\python.exe`. Module discovery found `requests`, NumPy, pandas, SciPy, Matplotlib and scikit-learn; it did not find Biopython (`Bio`) or `umap`. This confirms discovery only, not successful imports or full functionality. No dependencies were installed. Biopython is required for Assignment 1; UMAP support is needed for Assignment 3. Installation requires separate approval.
@@ -28,14 +28,51 @@ The student approved recording the following approach. These are project convent
 - **Statistical defaults:** use `random_state=42` where supported for stochastic methods. For differential expression, use Benjamini-Hochberg FDR correction with a significance threshold of 0.05. Specific tests, expression filtering, method parameters and cross-dataset compatibility remain subject to inspection and approval in A3.0.
 - **S0 scope:** record decisions only in `PLAN.md`; do not implement scripts, download datasets or install packages. Add study-guide explanations alongside approved implementations.
 
+### A1.1 — implementation status (accepted)
+
+- Created `.venv/` using Python 3.12.14. The student installed Biopython manually; version 1.88 was confirmed in that environment and pinned in `requirements.txt` as the only direct dependency. `pip check` reported no broken requirements.
+- Added `load_genome()` in `orf_finder.py` to read exactly one nonempty FASTA record, uppercase its sequence and reject symbols outside `ACGT`.
+- After command-environment network failures, the student supplied `genome.fasta`. The loader read one record with ID `NC_001416.1`, description `Enterobacteria phage lambda, complete genome`, length 48,502 nucleotides and only `ACGT` symbols. This verifies the local input's header and content structure; it is not an independent checksum comparison with NCBI.
+- Functional checks passed for the real genome, mixed-case multiline DNA, and rejection of missing files, no records, empty sequences, multiple records, ambiguous bases, invalid symbols and gaps. Small test sequences were supplied in memory; the genome was left unchanged.
+- Python syntax and Git whitespace checks passed; `.venv/Scripts/python.exe` is ignored. The student accepted A1.1 and approved the proposed A1.2 implementation.
+
+### A1.2 — implementation status (accepted)
+
+- Added `find_orfs(sequence)` in `orf_finder.py`. It checks every `ATG` in all six frames and reports the first in-frame STOP, signed frame, 1-based inclusive original-reference coordinates, nucleotide length including STOP and protein without the terminal `*`. Biopython performs reverse complement and translation only; the ORF search is implemented explicitly.
+- Hand-checked cases passed for all six frames, reverse coordinates, nested starts, all three STOP codons, first-STOP behavior, out-of-frame stops, sequence boundaries, separate ORFs, trailing incomplete codons and missing complete ORFs.
+- The lambda genome produced 1,800 ORFs without minimum-length filtering: `+1`: 340, `+2`: 332, `+3`: 326, `-1`: 283, `-2`: 248, `-3`: 271. Every result passed coordinate-to-sequence reconstruction, frame, length, ATG, first-STOP and protein checks; no duplicate frame/coordinate entries were found. These are sequence-defined ORFs, not confirmed genes.
+- Added the method, coordinate formulas, verification results and instructor questions to `STUDY_GUIDE.md`. The student accepted A1.2. CLI arguments, minimum-length filtering and CSV output are covered in A1.3 below.
+
+### A1.3 — implementation status (accepted)
+
+- Added a `main()` entry point to `orf_finder.py` using standard-library `argparse` and `csv`. It accepts a positional FASTA path, `--min-len` (positive integer, default 100 nucleotides including STOP) and `--out` (default `orfs.csv`). It retains ORFs with `length >= min_len` and writes `frame,start,end,length,protein` columns. Existing output files are preserved; likely input/output errors produce short messages and exit code 2.
+- Ran `.venv\Scripts\python.exe -B orf_finder.py genome.fasta --min-len 100 --out orfs.csv`. The output contains 708 ORFs, with lengths from 102 to 3,399 nucleotides. Counts by frame: `+1`: 146, `+2`: 129, `+3`: 138, `-1`: 110, `-2`: 92, `-3`: 93.
+- CLI checks passed for inclusive threshold boundaries, 100-nt/default-output behavior, a header-only result, reverse-strand CSV fields, lowercase input, invalid thresholds, missing/invalid FASTA, a missing output directory, existing-file protection and `--help`.
+- Every generated CSV row matched the filtered search results and passed coordinate, frame, length, ATG, first-STOP and translation checks. The student accepted A1.3. The k-mer implementation is covered in A1.4 below.
+
+### A1.4 — implementation status (accepted)
+
+- Added `kmer_freq.py`, reusing the Biopython FASTA loader from `orf_finder.py`. `count_kmers(sequence, k)` uses standard-library `Counter` to count overlapping windows of the forward sequence and returns `(kmer, count, frequency)` rows. It requires `1 <= k <= N`, uses `count / (N - k + 1)` for frequencies and sorts by decreasing count with alphabetical ties.
+- The CLI accepts a positional FASTA path, required integer `-k` and required `--out`. It writes `kmer,count,frequency` columns, preserves existing output files and gives short messages for likely errors. No additional dependencies were introduced.
+- Ran `.venv\Scripts\python.exe -B kmer_freq.py genome.fasta -k 3 --out kmers_k3.csv`. The output contains 64 distinct 3-mers with a count sum of 48,500 (`48,502 - 3 + 1`); relative frequencies sum to 1 within floating-point tolerance. All counts were independently checked against overlapping occurrences in the genome, and every row's frequency and sort position were verified.
+- Hand-counted examples passed for overlapping windows, unequal counts, alphabetical ties, `k=1`, `k=N`, forward-only counting and lowercase multiline input. CLI argument, invalid/missing FASTA, output-path, existing-file and help checks passed. At the student's request, counting and row construction were expanded into explicit loops with a named sorting rule; behavior-preservation checks passed. The student accepted A1.4. The Assignment 1 audit is covered in A1.5 below.
+
+### A1.5 — acceptance check (verified; awaiting acceptance)
+
+- Re-read Assignment 1 directly from page 1 of `Bioinformatics_Project_1.pdf` and compared every requirement with the scripts, conventions and outputs. No implementation gaps or necessary corrections were identified.
+- Confirmed all four required deliverables exist and are nonempty: `orf_finder.py`, `kmer_freq.py`, `orfs.csv` and `kmers_k3.csv`. Both scripts use the same Biopython loader and the local lambda input identified as `NC_001416.1`. The ORF search is implemented explicitly; Biopython is used for parsing, reverse complement and translation.
+- Ran both assignment-style CLIs with the project interpreter into a temporary directory. Each regenerated CSV was byte-for-byte identical to the corresponding saved CSV. SHA-256 checks confirmed that the scripts, input genome and saved tables were unchanged by the audit; temporary outputs were cleaned up.
+- Rechecked exact examples for all six frames and all 708 saved ORF rows: required fields, minimum length, 1-based inclusive coordinates, frame mapping, ATG, first in-frame STOP and translation. Independently recounted every one of the 64 saved 3-mers, confirming 48,500 windows, frequencies and sorting. Both CLI help commands and `pip check` passed.
+- Recorded the requirement mapping and results in `STUDY_GUIDE.md`. No source code or saved CSV changes were needed. A1.5 awaits acceptance; its checkbox remains unchecked. A2.1 has not started.
+
 ## Assignment 1 — ORFs and k-mer frequencies (5 points)
 
 **Explicit deliverables:** `orf_finder.py`, `kmer_freq.py`, `orfs.csv`, `kmers_k3.csv` (plus an input FASTA genome for local runs).
 
-- [ ] **A1.1 — Input genome and FASTA reading.** Obtain the chosen NCBI genome and inspect its FASTA record; implement the minimum Biopython FASTA loading needed by the ORF script. Verify input is read correctly. Keep files minimal.
-- [ ] **A1.2 — ORF search.** Implement your own ATG → first in-frame stop search in all 3 forward and 3 reverse-complement frames (no Biopython ORF-finding function). Calculate 1-based original-sequence positions, lengths, frame, and translated proteins. Verify on tiny hand-checked forward and reverse examples, including boundaries.
-- [ ] **A1.3 — ORF CLI and CSV.** Add required `--min-len` and `--out` interface; write `orfs.csv` for the genome. Validate columns and a sample of coordinates and translations. Example: `python orf_finder.py genome.fasta --min-len 100 --out orfs.csv`.
-- [ ] **A1.4 — k-mer script and CSV.** Read FASTA with Biopython, accept `-k` and `--out`, count overlapping sequence k-mers, compute relative frequencies, order by descending count; generate `kmers_k3.csv`. Verify on an easily counted toy DNA string. Example: `python kmer_freq.py genome.fasta -k 3 --out kmers_k3.csv`.
+- [x] **A1.1 — Input genome and FASTA reading.** Obtain the chosen NCBI genome and inspect its FASTA record; implement the minimum Biopython FASTA loading needed by the ORF script. Verify input is read correctly. Keep files minimal.
+- [x] **A1.2 — ORF search.** Implement your own ATG → first in-frame stop search in all 3 forward and 3 reverse-complement frames (no Biopython ORF-finding function). Calculate 1-based original-sequence positions, lengths, frame, and translated proteins. Verify on tiny hand-checked forward and reverse examples, including boundaries.
+- [x] **A1.3 — ORF CLI and CSV.** Add required `--min-len` and `--out` interface; write `orfs.csv` for the genome. Validate columns and a sample of coordinates and translations. Example: `python orf_finder.py genome.fasta --min-len 100 --out orfs.csv`.
+- [x] **A1.4 — k-mer script and CSV.** Read FASTA with Biopython, accept `-k` and `--out`, count overlapping sequence k-mers, compute relative frequencies, order by descending count; generate `kmers_k3.csv`. Verify on an easily counted toy DNA string. Example: `python kmer_freq.py genome.fasta -k 3 --out kmers_k3.csv`.
 - [ ] **A1.5 — Assignment 1 acceptance check.** Confirm both scripts run and both requested CSVs exist, are nonempty where expected, and conform to the PDF. Review only necessary corrections.
 
 ## Assignment 2 — automated gene report via API (5 points)
