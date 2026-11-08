@@ -38,15 +38,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("fasta", help="Input FASTA containing one genome.")
     parser.add_argument("-k", type=int, required=True, help="k-mer length: 1 through genome length.")
-    parser.add_argument("--out", required=True, help="New output CSV file.")
+    parser.add_argument("--out", required=True, help="Output CSV file.")
     args = parser.parse_args()
 
     try:
         genome = load_genome(args.fasta)
         rows = count_kmers(genome.seq, args.k)
 
-        # Exclusive creation protects existing results from accidental overwrites.
-        with open(args.out, "x", newline="", encoding="utf-8") as output:
+        with open(args.out, "w", newline="", encoding="utf-8") as output:
             writer = csv.writer(output)
             writer.writerow(["kmer", "count", "frequency"])
             writer.writerows(rows)

@@ -1,19 +1,19 @@
 # Codex instructions — Bioinformatics 2026, Project 1
 
 ## Project authority and goal
-- The assignment PDF (`Bioinformatics_Project_1.pdf`) is the source of truth for project requirements. Read it before implementing anything. If it is missing, stop and ask for it.
+- The assignment PDF (`docs/Bioinformatics_Project_1.pdf`) is the source of truth for project requirements. Read it before implementing anything. If it is missing, stop and ask for it.
 - Implement **all and only** the requirements in that PDF. Do not add bonus features, extra analyses, elaborate architectures, or unnecessary deliverables.
 - Optimize for **correctness, simplicity, readability, and the student's understanding**, not cleverness, performance micro-optimizations, or production-style engineering.
 - Write code and code comments in straightforward English. Explain decisions to the student in Polish unless requested otherwise.
-- Follow `PLAN.md` for the order and acceptance checks. This file is a plan, not authorization to complete every stage in one go.
+- Follow `docs/PLAN.md` for the order and acceptance checks. This file is a plan, not authorization to complete every stage in one go.
 
 ## Mandatory approval gate (highest-priority working rule)
-1. At the start of a session, identify the **next unapproved stage** in `PLAN.md` and briefly say what it entails.
+1. At the start of a session, identify the **next unapproved stage** in `docs/PLAN.md` and briefly say what it entails.
 2. Before editing code for that stage, summarize the intended approach and list the files you would change. **Wait for explicit student approval.**
 3. Implement **only that approved stage**. Do not proceed to the next stage, even if it seems trivial or closely related.
 4. Run relevant, small verification checks, where practical. Explain in Polish: what changed; how the code works; why the method is suitable; how you verified it; anything still uncertain.
 5. **Stop and wait** for acceptance or feedback. Never infer approval from silence.
-6. Update the stage checkbox in `PLAN.md` only when the student expressly accepts it. Do not mark a stage complete merely because code runs.
+6. Update the stage checkbox in `docs/PLAN.md` only when the student expressly accepts it. Do not mark a stage complete merely because code runs.
 
 A user can explicitly authorize several stages together, but otherwise treat each stage as a separate gate. Inspection and explanation without code edits are allowed before approval.
 
@@ -55,7 +55,7 @@ A user can explicitly authorize several stages together, but otherwise treat eac
 - Do not claim a statistical result is meaningful without checking assumptions and reporting relevant limitations.
 
 ## Learning material
-- Maintain `STUDY_GUIDE.md` as a **private study aid, not a required submission artifact**. Add only explanations for stages actually approved and implemented.
+- Maintain `docs/STUDY_GUIDE.md` as a **private study aid, not a required submission artifact**. Add only explanations for stages actually approved and implemented.
 - For each implemented stage, briefly cover: its purpose; key input/output; algorithm explained step by step; important code functions; biological/statistical meaning; how the result was verified; 3–5 plausible instructor questions with concise answers.
 - Explain technical vocabulary in accessible language, while preserving the correct scientific terms.
 - Never use the guide as a reason to implement extra features or analyses.

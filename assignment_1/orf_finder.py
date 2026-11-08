@@ -63,7 +63,7 @@ def main():
         "--min-len", type=int, default=100,
         help="Minimum ORF length in nucleotides, including STOP (default: 100).",
     )
-    parser.add_argument("--out", default="orfs.csv", help="New output CSV file (default: orfs.csv).")
+    parser.add_argument("--out", default="orfs.csv", help="Output CSV file (default: orfs.csv).")
     args = parser.parse_args()
     if args.min_len < 1:
         parser.error("--min-len must be a positive integer.")
@@ -72,8 +72,7 @@ def main():
         genome = load_genome(args.fasta)
         orfs = [orf for orf in find_orfs(genome.seq) if orf["length"] >= args.min_len]
 
-        # Exclusive creation protects existing results from accidental overwrites.
-        with open(args.out, "x", newline="", encoding="utf-8") as output:
+        with open(args.out, "w", newline="", encoding="utf-8") as output:
             writer = csv.DictWriter(output, fieldnames=["frame", "start", "end", "length", "protein"])
             writer.writeheader()
             writer.writerows(orfs)
