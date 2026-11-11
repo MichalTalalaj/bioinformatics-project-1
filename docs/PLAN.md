@@ -7,13 +7,39 @@
 ## Repository layout
 
 - Project root: full `AGENTS.md`, `requirements.txt`, teacher-facing `README.md`, `.gitignore` and the ignored `.venv/`.
-- `assignment_1/`: both scripts, `genome.fasta`, `orfs.csv` and `kmers_k3.csv`.
-- `assignment_2/`: `genereport.py` and the verified live report `reports/APOE_Homo_sapiens.md`. `assignment_3/` remains reserved and empty. Git does not track empty directories.
+- `assignment_1/`: both scripts, `genome.fasta`, `orfs.csv`, `kmers_k3.csv` and the student-requested private study notebook `manual_checks.ipynb` (not a PDF submission requirement).
+- `assignment_2/`: `genereport.py`, the verified live report `reports/APOE_Homo_sapiens.md` and the student-requested private study notebook `manual_checks.ipynb`. `assignment_3/` remains reserved and empty. Git does not track empty directories.
 - `docs/`: this plan, `Bioinformatics_Project_1.pdf` and `STUDY_GUIDE.md`.
 
 Run assignment-specific commands from the corresponding assignment directory; install dependencies from the project root. Earlier verification commands below record the original flat layout. The README and study guide show current run locations.
 
 The student approved this layout and requested normal CSV overwrite behavior. Both scripts now create or replace `--out` using mode `w`. Repeated runs in a temporary copy of `assignment_1/` replaced pre-existing outputs and reproduced the saved CSVs byte for byte. Invalid input was rejected before opening the output. The original genome, PDF and saved tables were preserved; the existing no-final-newline edit in `orf_finder.py` was retained. This maintenance change does not alter analysis-stage acceptance checkboxes.
+
+## Assignment 1 manual notebook — approved addition, awaiting review
+
+The student explicitly approved a short notebook for manual verification, separately from the assignment's required deliverables. Added only `assignment_1/manual_checks.ipynb` and matching plan/study notes. No source scripts, dependencies or saved results were modified; no tools were installed. A1.5's acceptance checkbox remains unchanged.
+
+The notebook imports the existing functions and contains seven code cells: setup/kernel display and file hashes; the real FASTA record; hand-checked ORFs in all six frames; nested starts/first STOP and incomplete ORFs; hand-counted overlapping k-mers; both actual CLIs and minimum-length boundaries using temporary outputs; saved CSV totals/row properties and unchanged-file checks. Explanations distinguish constructed examples from real genome input and reproducibility from independent correctness evidence.
+
+Executed every code cell in order with the project Python, once from the project root and once from `assignment_1/`; both runs passed. Regenerated CSVs matched the saved files byte for byte. Minimum length 9 included the 9-nt toy ORF and 10 excluded it. Checks confirmed 708 saved ORFs, 64 distinct 3-mers, 48,500 windows and frequency sum 1. Original scripts, genome, CSVs and Assignment 2 report hashes stayed unchanged. Notebook JSON has unique cell IDs and intentionally empty outputs/execution counts. This verifies cell execution directly, not a graphical Jupyter session. The student should select the `.venv` kernel, restart it and run cells top to bottom; notebook acceptance is pending.
+
+## Assignment 2 manual notebook — approved addition, awaiting live review
+
+The student explicitly approved a function-by-function notebook with raw online responses, record links and temporary writing checks. Added `assignment_2/manual_checks.ipynb` and matching plan/study notes only. No script, saved report, dependency or tool configuration was changed; existing stage acceptance checkboxes were retained.
+
+Each of the script's 20 functions has a labelled check: the 19 helper functions are called directly, and `main()` is exercised through a real script subprocess. Raw NCBI search/summary/link JSON and GenBank annotations are displayed, followed by extracted outputs. UniProt checks display raw paginated results, review selection, text/comment/entry parsing and online record links. Ensembl checks expose gene fields, transcript IDs/versions/canonical flags and parsed values. Formatting/assembly cells display Markdown, optionally diff against the saved report, and exercise writing and the complete CLI in temporary directories. Final hashes check preservation of the script and saved report. Previously observed counts are labelled historical examples rather than permanent live expectations.
+
+Validation passed for notebook JSON, unique cell IDs, Python syntax in all cells and coverage of every script function. Setup located the script from both the project root and `assignment_2/`. Ten local parser/formatting/assembly/writing cells and the final preservation cell executed successfully with controlled inputs outside the notebook's default live workflow. The notebook itself contains no mocked responses and opens with empty outputs/execution counts. A real attempt at its first live API cell failed with this session's `ConnectionError`; no full live notebook or graphical Jupyter execution is claimed. The student should select `.venv`, restart the kernel, run top to bottom and manually compare record versions and assembly with the printed online links. Live review and notebook acceptance remain pending.
+
+## Assignment 3 — approved first loading block (awaiting acceptance)
+
+The student chose `assignment_3/rnaseq.ipynb` instead of the previously proposed script and will specify each code block separately. The student explicitly authorized only loading the GSE40419 RPKM matrix and available metadata, separating annotations and aligning by full sample name. Added one explanatory Markdown cell and one code cell. No expression transformation/filtering, plots, pairing, clustering or other later analysis was started. A3.0 remains incomplete pending patient verification and the remaining dataset/analysis decisions.
+
+The cell creates `gene_annotations` (six annotation columns, original rows including repeated genes), `rpkm` (36,742 rows by 164 expression samples) and sample-aligned `metadata` with GEO accession, tissue, sex, smoking, patient and driver-mutation fields. Tissue is read from the source-name field; sex/smoking are read from characteristics. Seven smoking `NA` values become missing. Full LC_C/LC_S names remain intact. Patient IDs remain missing until a mapping is verified; no numeric-only patient IDs are derived. Driver mutations are explicitly missing/unavailable. Chromosome annotation is loaded as text; expression values are checked as numeric, nonmissing and nonnegative.
+
+Approved limitation: proceed without driver-mutation annotations because the downloaded series matrix does not supply them. Never infer mutations or substitute tumour stage. Use available clinical variables for later visualisations and smoking status for tumour-cluster association testing under task 3's smoking-or-EGFR/KRAS wording. This is student approval, not confirmed teacher approval. At the end, update the teacher-facing README to identify absent mutation annotations and the mutation-based visualisations/association analyses consequently omitted. That final README update is pending; no later analysis is authorized by this note.
+
+Verification used the existing Conda environment (`pandas` 3.0.6), not a newly installed package: the cell ran from both the project root and `assignment_3/`, with exact sample-name alignment, distinct LC_C1/LC_S1 entries, 87 tumour/77 normal records, 7 missing smoking values, missing patient/mutation fields for all 164 samples, repeated gene labels preserved and source-file hashes unchanged. Pandas is absent from `.venv`; installation permission was requested separately and remains pending. No requirements or environment installation was changed. The first block awaits student acceptance/instructions; no stage checkbox was marked complete.
 
 ## Initial decisions (before coding)
 
@@ -35,7 +61,7 @@ The student accepted S0 and separately approved environment setup and A1.1. Thes
 - **Ambiguous symbols in Assignment 1:** convert input sequence letters to uppercase, then reject any symbol outside `ACGT` with a clear error. Do not guess bases or silently discard sequence windows.
 - **k-mers:** count overlapping windows in the supplied forward sequence, without additionally counting its reverse complement. Report observed k-mers. For a sequence of length `N` and valid `1 <= k <= N`, relative frequency is `count / (N - k + 1)`. Sort by decreasing count, breaking ties alphabetically.
 - **Gene report:** use `APOE` and `Homo sapiens` as the example. Produce one Markdown report in the directory selected by `--out`, marking absent fields as unavailable. Agree on record-selection rules in the relevant stages after inspecting real API responses.
-- **RNA-seq output structure:** use one `rnaseq.py` script, extended only in approved stages, and a `results/` directory for required tables and plots.
+- **RNA-seq output structure:** the student subsequently chose one `assignment_3/rnaseq.ipynb` notebook, extended one explicitly requested code block at a time. Required tables and plots will be added only in approved later steps.
 - **Statistical defaults:** use `random_state=42` where supported for stochastic methods. For differential expression, use Benjamini-Hochberg FDR correction with a significance threshold of 0.05. Specific tests, expression filtering, method parameters and cross-dataset compatibility remain subject to inspection and approval in A3.0.
 - **S0 scope:** record decisions only in `PLAN.md`; do not implement scripts, download datasets or install packages. Add study-guide explanations alongside approved implementations.
 
@@ -167,3 +193,33 @@ The PDF does not specify all conventions. Before relevant implementation, agree 
 - GSE10072 comparison method, cross-platform gene identifiers, compatible input scale, and what to do if a requested field is not available.
 
 **Rule:** Make assumptions explicit, prefer the simplest correct option, and obtain the student's approval at the corresponding stage.
+
+## A3.4 - Part 4 revision toward Lab 3 (implemented; awaiting acceptance)
+
+- The student authorized correcting Part 4 of assignment_3/rnaseq.ipynb to follow assignment_3/lab3_GSE10072.ipynb while retaining the PDF's paired-test requirement for GSE40419. Earlier cells and student commentary were preserved.
+- GSE40419 retains 77 full-prefix candidate pairs; available age/sex/smoking values have no conflicts, but independent patient mapping remains unavailable. Ten unpaired tumours are excluded. Paired tests use filtered log2(RPKM + 1); BH correction remains at the record level.
+- GSE10072 follows the lab's Welch analysis on all 58 tumours and 49 normals, without another log transformation. AFFX controls and incomplete numeric rows are removed. The lab independence assumption ignores matched samples and is explicitly documented.
+- BH FDR < 0.05 is reported separately from Exercise 6 selection (also absolute mean log2 difference >= 1). Volcano plots distinguish higher/lower tumour expression and use shared axes. Bonferroni, shuffled-label teaching exercises and the top-30 heatmap were not added because Part 4 does not request them.
+- Added official GPL96 annotation retrieval/cache and a comparison restricted to shared gene symbols. As in the lab, the first symbol of a multi-symbol probe is used, with ambiguity disclosed. Highest-mean-expression representatives are selected independently of significance in each dataset. FDR values still come from record/probe tests, not gene-level tests.
+- Local execution verified preprocessing, both tests, sample counts, FDR ranges, summaries and plotting: GSE40419 27,190 tests / 20,408 FDR-significant / 2,239 selected records; GSE10072 22,215 tests / 11,047 FDR-significant / 857 selected probes. These are not unique-gene counts. Changed cells have stale outputs cleared for rerunning.
+- GPL96 download is blocked by the tool session's network restriction. Annotation parsing syntax is checked, but live annotation loading and the complete shared-gene comparison await local execution. The supplied Lab 3 notebook has empty differential-testing cells, so there are no saved lab results to match numerically. No stage checkbox was marked complete.
+
+### A3.4 - readability revision
+
+The student accepted the visible Part 4 results and authorized simplification without changing the analysis. Part 4 code was reduced from 323 to 273 lines: metadata fields are mapped directly, make_de_table() shares result/FDR/selection construction, and gene tables use one representative-selection loop and an inner join. Unchanged Parts 1-3 and every saved output were verified against a temporary pre-edit copy. Real-data before/after result tables, metadata and candidate pairs were exactly equal. Controlled examples confirmed identical representative selection, shared-gene tables and direction agreement; these were logic checks, not claimed biological results. Official annotation retrieval remains subject to the earlier network limitation. The simplified code awaits student review; checkboxes were not changed.
+
+### A3.4 - local-file comparison block
+
+At the student's request, annotation loading and gene comparison are now one cell with an ordered printed summary. Download code was removed; data/GPL96_annotation.tsv is a required supplied input. The actual local annotation file enabled end-to-end verification: 10,305 shared genes, 960 selected GSE40419 and 555 selected GSE10072 representatives within that universe, 438 selected in both, all 438 with matching direction. These describe the stated representative-selection rule, not independently validated gene-level FDR. No input data were modified.
+
+## A3.5 - classifier audit and external ROC correction (awaiting acceptance)
+
+The student authorized inspecting and correcting Part 5. A full nested-CV rerun kept the representation, classifier and C grid: five outer grouped folds and three inner folds reproduced mean AUC 0.998611 and pooled out-of-fold AUC about 0.996, with all 164 samples covered. Both CV levels had zero patient overlap. The 87 full-prefix candidate groups comprise 77 pairs and ten singletons. Features contain genes only, with no exact duplicate profiles. A one-off shuffled-label diagnostic at fixed C=0.01 averaged 0.461955; this is not a formal significance test.
+
+External AUC=0.5 came from all 107 probabilities rounding to 1.0 despite distinct decision scores (65.46 to 78.19). The largest absolute target scaled value exceeded 15,604 training standard deviations. External ROC now uses decision_function without changing the model: verified AUC 0.993315. The default threshold still predicts all 107 samples as tumour. Saturation, class counts and platform/calibration limitations are reported. No external-driven model or preprocessing tuning was performed. A temporary notebook copy preserves the prior external output; earlier cells were preserved. README limitations are updated under the student's earlier request. No stage checkbox was marked complete.
+
+## Submission preparation (F3; prepared for student review)
+
+The student requested a submission folder and brief running instructions. Created submission/ with 12 copied deliverable/input files across the three assignments, a short teacher-facing README and combined requirements pinned to the observed scientific-package versions (plus the notebook launcher). Included all four Assignment 3 input tables and the generated Assignment 1 CSVs and Assignment 2 report. Excluded private guides/plans, AGENTS.md, manual-check notebooks, the Lab 3 exercise notebook, the friend's solution and environment/cache files. README preserves missing-mutation/student-only approval, candidate-pair and external-calibration limitations.
+
+Verification: all 12 copies match source SHA-256 hashes; copied notebook code compiles and contains no saved error outputs; all three copied script --help commands pass. Total 14 files, about 68.3 MB. A fresh dependency installation/browser notebook launch was not performed. Original assignment files were not edited and nothing was committed or pushed. Stage checkboxes remain subject to explicit acceptance.

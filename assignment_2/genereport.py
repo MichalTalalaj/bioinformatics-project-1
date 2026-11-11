@@ -14,6 +14,9 @@ UNIPROT_URL = "https://rest.uniprot.org/uniprotkb/search"
 ENSEMBL_URL = "https://rest.ensembl.org/lookup/symbol/"
 
 
+# endpoint specifies the NCBI E-utilities function (esearch, elink)
+# parameters is a dictionary of query parameters for the request (db, term, rettype, etc.)
+# returns a dictionary parsed from the JSON response
 def get_ncbi_json(endpoint, parameters):
     """Request JSON and reject HTTP failures or NCBI error responses."""
     # Space consecutive NCBI calls to stay below three requests per second.
@@ -26,6 +29,9 @@ def get_ncbi_json(endpoint, parameters):
     return data
 
 
+
+# takes symbol (e.g. APOE) and organism (e.g. Homo sapiens) as input
+# returns the NCBI Gene ID
 def find_gene_id(symbol, organism):
     """Search NCBI Gene and require exactly one result."""
     search = get_ncbi_json("esearch.fcgi", {
@@ -48,7 +54,8 @@ def find_gene_id(symbol, organism):
         raise ValueError("NCBI search returned an inconsistent list of Gene IDs.")
     return result["idlist"][0]
 
-
+# simillar to find_gene_id, but fetches the gene summary and checks that it matches the requested symbol and organism
+# takes gene_id (from find_gene_id), symbol, and organism as input
 def fetch_gene_summary(gene_id, symbol, organism):
     """Retrieve a summary and check that it identifies the requested gene."""
     summary = get_ncbi_json("esummary.fcgi", {
@@ -71,6 +78,9 @@ def fetch_gene_summary(gene_id, symbol, organism):
     return gene
 
 
+# based on fetch_gene_summary returns dictionary with gene information
+# required by the task pdf
+# takes paresed user input (symbol and organism)
 def get_ncbi_gene(symbol, organism):
     """Find the gene, retrieve its summary and extract readable report fields."""
     gene_id = find_gene_id(symbol, organism)
@@ -92,7 +102,7 @@ def get_ncbi_gene(symbol, organism):
         "MIM references": ", ".join(mim_references) or "Unavailable",
     }
 
-
+# based on gene_id finds all RefSeq RNA records linked to this Gene ID
 def find_refseq_rna_ids(gene_id):
     """Find all RefSeq RNA records linked to this Gene ID."""
     data = get_ncbi_json("elink.fcgi", {
@@ -114,6 +124,8 @@ def find_refseq_rna_ids(gene_id):
     return rna_ids
 
 
+# extracts CDS coordinates, protein_id, and transl_table from
+# a single RefSeq mRNA record in GenBank format (which is the input)
 def parse_cds_features(record):
     """Read CDS locations and the two required qualifiers from GenBank text."""
     coding_sequences = []
@@ -151,6 +163,11 @@ def parse_cds_features(record):
 
     return coding_sequences
 
+# simillar to parse_cds_features
+# extracts RefSeq mRNA accession and version, length, last modification date
+# asserts that the record is correctly linked to the requested Gene ID and organism
+
+# returns both the transcript information and the CDS information
 
 def parse_refseq_mrna(record, gene_id, organism):
     """Extract required fields from one mRNA record; skip noncoding RNAs."""
@@ -178,6 +195,9 @@ def parse_refseq_mrna(record, gene_id, organism):
         "CDS": parse_cds_features(record),
     }
 
+# combines 3 functions: find_refseq_rna_ids, parse_refseq_mrna, and get_ncbi_json
+# gets all linked RefSeq mRNAs for a given gene_id and organism
+# returns a list of dictionaries with transcript information and CDS information
 
 def get_ncbi_nucleotide(gene_id, organism):
     """Retrieve all linked RefSeq mRNAs, without choosing one transcript."""
@@ -211,6 +231,11 @@ def get_ncbi_nucleotide(gene_id, organism):
     transcripts.sort(key=lambda transcript: transcript["Accession/version"])
     return transcripts
 
+
+
+# collect all protein entries from uniprot matchin the symbol and organism
+# responses are limited to either reviewed or unreviewed entries
+# returns a list of dictionaries with protein information and annotations
 
 def search_uniprot_entries(symbol, organism, reviewed):
     """Retrieve all exact gene/organism matches for one review status."""
@@ -250,6 +275,8 @@ def search_uniprot_entries(symbol, organism, reviewed):
         parameters = None
     return entries
 
+# helper function to extract the text values from dictionaries
+# returns a list of strings
 
 def uniprot_texts(items):
     """Read the text values used in UniProt comments and notes."""
@@ -259,6 +286,9 @@ def uniprot_texts(items):
             texts.append(item["value"])
     return texts
 
+
+# devides the comments into three categories: Function, Cofactors, and Diseases
+# returns a dictionary with three lists of strings
 
 def parse_uniprot_comments(entry):
     """Keep function descriptions, cofactor annotations and disease context."""
@@ -286,6 +316,8 @@ def parse_uniprot_comments(entry):
                 annotations["Diseases"].append(" | ".join(description))
     return annotations
 
+# based on previous functions, extracts the required protein fields f0m one entry
+# returns a dictionary with protein information and annotations
 
 def parse_uniprot_entry(entry):
     """Extract the required protein fields from one verified UniProt entry."""
@@ -329,6 +361,10 @@ def parse_uniprot_entry(entry):
     }
 
 
+# searches for all UniProt entries matching the gene symbol and organism
+# returns a list of dictionaries with protein information and annotations
+# in case there are no reviewed entries, it will return unreviewed entries instead
+
 def get_uniprot_proteins(symbol, organism):
     """Prefer all reviewed matches; use unreviewed matches only if none exist."""
     entries = search_uniprot_entries(symbol, organism, reviewed=True)
@@ -341,6 +377,11 @@ def get_uniprot_proteins(symbol, organism):
         proteins.append(parse_uniprot_entry(entry))
     return proteins
 
+
+# makes a call to the Ensembl REST API 
+# fetches the gene record for the given symbol and organism
+# checks that the returned record matches the requested symbol and organism
+# returns the gene record as a dictionary
 
 def fetch_ensembl_gene(symbol, organism):
     """Retrieve the expanded gene record and check its symbol and species."""
@@ -361,6 +402,9 @@ def fetch_ensembl_gene(symbol, organism):
         raise ValueError("The Ensembl species does not match the requested organism.")
     return gene
 
+# parses the Ensembl gene record and extracts the required fields
+# counts the number of transcripts returned in the expanded record
+# checks that the canonical transcript is present in the transcript list (if both canonical and transcript list are present)
 
 def parse_ensembl_gene(gene):
     """Extract gene fields and count the returned expanded transcripts."""
@@ -394,6 +438,11 @@ def parse_ensembl_gene(gene):
         "Biotype": gene.get("biotype") or "Unavailable",
     }
 
+
+##############################
+
+# this section is responsible for formatting the report and writing it to a file
+# no bioinformatics is being done here, just formatting and writing to a file
 
 def markdown_text(value):
     """Keep annotation punctuation literal when displayed as Markdown."""
@@ -462,6 +511,11 @@ def write_report(output_directory, symbol, organism, report):
     report_path.write_text(report, encoding="utf-8")
     return report_path
 
+
+##############################
+
+# parser is added to interpret the command line arguments
+# then the main function calls all the other functions in order to generate the report
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

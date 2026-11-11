@@ -2,9 +2,68 @@
 
 This is a private learning aid, not a required submission artifact. It covers only approved work already implemented.
 
+For hands-on Assignment 1 verification, open [manual_checks.ipynb](../assignment_1/manual_checks.ipynb), select the project's `.venv` kernel, restart it and run cells top to bottom. This student-requested notebook is also a private study aid. Expected answers appear before each check; an assertion failure means the result needs investigation. The notebook uses the existing scripts and temporary outputs, leaving the saved genome and CSVs unchanged.
+
 Assignment 2 is covered at the end of this guide. Its commands run from `assignment_2/`.
 
+For function-by-function live inspection, open [Assignment 2 manual checks](../assignment_2/manual_checks.ipynb), select `.venv`, restart the kernel and run top to bottom. It displays raw responses and the existing functions' outputs, with online record links. Internet access is required; temporary directories protect your saved report during writing and CLI checks.
+
 Assignment 1 files now live in `assignment_1/`; run the commands and Python examples below from that directory. The virtual environment and `requirements.txt` remain at the project root. Both CLIs overwrite their specified output CSV on a successful run, as requested by the student. Repeated-run checks in temporary copies reproduced the saved tables without changing the originals.
+
+## Using the Assignment 1 manual notebook
+
+The notebook's purpose is to let you inspect small expected answers before checking the real genome and saved results. Inputs are deliberately constructed DNA examples and the existing FASTA/CSVs; outputs are readable values and passed assertions. `load_genome()`, `find_orfs()` and `count_kmers()` are imported from the actual scripts, so this does not maintain another implementation.
+
+Run setup first and check the displayed Python executable. Next check the genome identity and length; compare six-frame ORFs with the explicit expected frame/coordinate/protein rows; check nested starts and first-STOP behavior; hand-count the k-mers; then run both CLIs into temporary files and compare with the saved CSVs. A separate toy CLI check covers minimum-length inclusion/exclusion. The final cell checks totals, basic CSV row properties and original file hashes. Restart the kernel after editing a script so imports are refreshed.
+
+All seven code cells passed when executed directly with the project Python from both supported working directories. The saved outputs were reproduced exactly, and original file hashes were unchanged. No Jupyter installation or graphical session was performed. These checks do not establish correctness for every possible sequence, and an ORF remains a sequence-defined candidate rather than a confirmed gene. A1.5 acceptance remains a separate decision.
+
+Possible instructor questions:
+
+1. **Why use hand-worked examples?** Their expected answers are independent of the implementation and help expose coordinate or counting mistakes.
+2. **Does reproducing a saved CSV prove the algorithm is correct?** No. It checks reproducibility; the independently expected toy examples check selected aspects of correctness.
+3. **Why use the kernel's Python for CLI checks?** It ensures subprocesses use the same interpreter and packages as the notebook.
+4. **Why write temporary outputs?** It exercises the real commands without replacing the student's saved results.
+
+## Using the Assignment 2 manual notebook
+
+Its purpose is to inspect every `genereport.py` function separately and compare extracted annotations with live database records. Inputs are APOE/Homo sapiens and actual API responses. Outputs include raw JSON/GenBank, selected identifiers, parsed fields, Markdown source and temporary files. The notebook imports the real script; it contains no replacement API implementation or fabricated live data.
+
+Follow the numbered cells: inspect NCBI search, ID selection and summary; compare linked RNA IDs and raw GenBank CDS blocks with the two parsers and complete mRNA output; inspect UniProt reviewed/fallback selection, raw comments, text extraction and complete protein fields; inspect Ensembl raw transcript identifiers and parsed fields; then check escaping, field formatting, report assembly, writing and the CLI. Change the selected RNA/protein index to inspect additional records and rerun the dependent parser cells. The CLI cell uses the kernel's Python, performs fresh requests and writes only in a temporary directory.
+
+For online comparison, match the scientific organism, accession/version and assembly before comparing fields. Previously observed transcript/PDB/keyword counts are examples, not assertions that online records can never change. Review any diff against the saved report against current raw data. Missing annotations do not imply biological absence, and extracted disease susceptibility notes must retain their meaning. Raw-to-parsed agreement checks extraction consistency; database content is not independent experimental confirmation.
+
+All notebook cells passed syntax checking, and coverage checking found all 19 helper calls plus the CLI check for `main()`. Ten local parsing/formatting/assembly/writing cells and the final hash check passed with controlled validation inputs; these were not saved as notebook results. Setup worked from both supported directories. This tool session's first live API cell failed with a connection error, so the complete live notebook and graphical Jupyter execution still need the student's verification. No packages were installed, and the script/saved report stayed unchanged.
+
+Possible instructor questions:
+
+1. **Why display raw responses before readable fields?** They expose the exact source paths and values being extracted, making a mapping error visible.
+2. **Does a difference from yesterday's saved report necessarily mean a bug?** No. Check current raw data, versions and assembly; online annotations may have changed.
+3. **Why are Nucleotide and Ensembl coordinates compared separately?** The CDS locations refer to a transcript, whereas Ensembl gene positions refer to a genomic assembly.
+4. **Why call the CLI again after checking individual functions?** It checks argument parsing and the complete retrieval-to-report path together, using fresh requests and temporary output.
+5. **What should happen when an API request fails?** Investigate or retry the request; a network failure is not a legitimately missing biological field.
+
+## Assignment 3 — first block: loading GSE40419
+
+Purpose: load raw RPKM expression and the available clinical annotations without starting preprocessing or analysis. Inputs are the local RPKM text file and GSE40419 series matrix under `assignment_3/data/`. Run the first cell in `rnaseq.ipynb` with a pandas-capable kernel. It supports a working directory at the project root or `assignment_3/`.
+
+1. `pd.read_csv()` reads the tab-separated matrix, treating chromosome labels as text. Separate gene/accession/chromosome/start/end/strand into `gene_annotations`; only sample expression columns enter `rpkm`. Repeated gene symbols and original row order are preserved, without aggregation.
+2. Standard-library `csv.reader()` reads quoted GEO metadata rows. Collect full sample titles, GEO accessions and source tissue names; extract `gender` and `smoking_status` characteristics into sex and smoking columns. Replace the source's smoking `NA` marker with `pd.NA`, pandas' missing-value marker.
+3. Create missing patient and driver-mutation columns. Patient mapping is not verified, so no patient IDs are assigned and LC_C/LC_S prefixes are retained in the sample index. Mutation information is unavailable; no stage or other variable is used as a substitute.
+4. Assert unique sample names and identical sample sets, then use `.loc[rpkm.columns]` to reorder metadata. The original files list samples in different orders, so position-only matching would be incorrect. Check numeric, nonmissing, nonnegative expression values and display dimensions, tissue counts, missingness and the first metadata rows.
+
+RPKM is an expression measure adjusted for transcript length and sequencing depth. It is not a raw read count. Gene-annotation coordinates describe genomic features; they must not be treated as expression samples. This block leaves RPKM unchanged: no log transformation, filtering, scaling or imputation of expression values is performed.
+
+The student's approved limitation permits continuing without mutations, using available clinical variables and later testing tumour clusters against smoking status. It is not confirmed teacher approval. The teacher-facing README must document missing mutation annotations and omitted mutation-based analyses at the end. Later analyses still require their own instructions/approval.
+
+Verification with the existing Conda pandas 3.0.6 environment confirmed 36,742 expression rows, 164 samples, six annotation columns, exact name alignment, 87 tumour/77 normal labels and seven missing smoking values. All patient and mutation values remain missing. LC_C1 and LC_S1 retain separate sample identities; repeated gene labels are kept. Source-file hashes were unchanged. Pandas installation in `.venv` has not been performed; environment approval is separate. Patient pairing and cross-dataset compatibility remain unresolved, and no later step has started.
+
+Possible instructor questions:
+
+1. **Why align metadata by name?** The same samples occur in different orders in the two files. Name-based reordering prevents assigning another sample's clinical labels.
+2. **Why separate the first six columns?** They describe genes and genomic locations, not RPKM measurements, and would corrupt expression calculations.
+3. **Why not strip every sample down to its number?** LC_C1 and LC_S1 would collapse into one identifier without evidence they are the same patient.
+4. **Does a missing mutation value mean wild type?** No. It means no mutation annotation is available from the supplied metadata.
 
 ## A1.1 — loading a genome
 
@@ -470,3 +529,49 @@ Syntax and CLI help checks passed. The tool session's live run was blocked, but 
 3. **Why escape `APOE*4` and accession underscores?** Markdown punctuation can change displayed formatting. Escaping preserves the literal annotation when rendered.
 4. **What happens on a successful rerun?** The same gene/organism filename is replaced with the newly retrieved report.
 5. **Does a successful controlled CLI check prove the final report is current?** No. It verifies assembly and writing; the real combined API run and generated file still need checking.
+
+## Assignment 3, Part 4 - differential expression and Lab 3 comparison
+
+**Purpose and inputs/outputs.** Compare tumour with normal expression while controlling false discoveries. Inputs are filtered log2(RPKM + 1) GSE40419 records, candidate pairs, log2 RMA GSE10072 values and GPL96 annotation. Outputs are result tables, volcano plots and shared-gene overlap/direction.
+
+**Steps and functions.**
+1. Merge GSE40419 tumour and normal metadata on the full LC_C/LC_S stem. Retain 77 candidate pairs in matching column order. Clinical agreement supports consistency, not independently verified identity.
+2. scipy.stats.ttest_rel tests each record's mean within-patient difference. Tumour minus normal is calculated on the transformed scale; the +1 pseudocount means it is not an ordinary log2 fold change.
+3. multipletests(method="fdr_bh") applies Benjamini-Hochberg correction to valid p-values. Undefined tests stay unavailable. FDR < 0.05 marks significance; Lab 3 Exercise 6 selection also requires absolute difference >= 1.
+4. For GSE10072, remove AFFX controls and use all 58/49 samples with ttest_ind(equal_var=False), matching the lab. Do not transform RMA values again. This method ignores dependence between matched tissues.
+5. Plot mean difference against -log10(FDR). Red/blue indicate selected higher/lower tumour expression. Grey means not selected, including significant records with small effects.
+6. Load/cache GPL96 annotation. First-listed gene symbols follow the lab but are ambiguous for multi-gene probes. Choose the highest-mean-expression record per gene independently of significance. Compare only shared represented genes and count direction agreement. Inherited FDRs remain record-level rather than gene-level.
+
+**Meaning and assumptions.** Paired tests use within-patient differences and assume independent patients and approximately normal differences. Outliers can influence them. Welch's test permits unequal variances but assumes independent observations. FDR controls an expected proportion of false discoveries under its assumptions, not the probability that a particular gene is false. Platform, sample-size and test-design differences limit cross-dataset interpretation. External findings must not guide classifier training or tuning.
+
+**Verification.** Local execution produced 27,190 GSE40419 tests, 20,408 FDR-significant and 2,239 selected records; GSE10072 produced 22,215 tests, 11,047 FDR-significant and 857 selected probes. Counts, FDR ranges and plotting were checked. Official annotation retrieval and complete overlap await local execution because tool network access is blocked; no overlap count is claimed.
+
+**Possible instructor questions.**
+1. Why retain pairing for GSE40419? The assignment requests it; valid pairing accounts for between-patient variation.
+2. Why Welch for GSE10072? It reproduces Lab 3, with imperfect independence because some tissues are matched.
+3. Why distinguish record and gene counts? Several probes or expression records can represent one gene.
+4. Why select representatives by mean expression? It avoids choosing records explicitly because they have smaller p-values.
+5. Does overlap prove replication? No; annotation ambiguity, different measurements and statistical designs limit that interpretation.
+
+### Part 4 code after simplification
+
+make_de_table(index, difference, p_values) constructs the same result columns for both datasets, corrects only defined p-values with BH, and marks significance and effect-size selection. The paired and Welch tests remain explicit in their own cells. Metadata uses a field-name dictionary to avoid repeated assignments. Gene records are sorted by mean expression, reduced to one record per gene, and combined with an inner join, which retains shared symbols only. These changes preserve the statistical results: exact before/after comparisons passed on the local datasets. Saved outputs and earlier analysis cells were preserved.
+
+The combined Part 4 comparison now reads the submitted data/GPL96_annotation.tsv locally and prints the shared universe, selected counts, overlap, and direction agreement. Verification with that file found 10,305 shared genes and 438 jointly selected representatives, all changing in the same direction. The results remain descriptive cross-platform agreement under the documented mapping and record-selection rules.
+
+## Assignment 3, Part 5 - classification and external ROC diagnosis
+
+**Purpose and inputs/outputs.** Predict tumour versus normal from GSE40419, using patient-grouped validation and external GSE10072 testing. Outputs are fold AUC, held-out predictions, model coefficients and external rankings/class predictions.
+
+**Steps.** Reload unfiltered GSE40419; log-transform once, average records per gene and match measured symbols to annotated GSE10072. These fixed operations do not use DE significance or external labels. Keep full-prefix candidate patients together. Within each outer training fold, StandardScaler and logistic regression are fitted in a pipeline; inner grouped GridSearchCV selects C. Outer patients are excluded from preprocessing and tuning. Tune/refit the final model on GSE40419 only. Absolute coefficients describe importance for training-standardised genes, with correlated and low-variation genes requiring caution.
+
+**Diagnosed artifact.** Probabilities are a sigmoid of decision scores. Large scores can round all probabilities to 1.0, destroying ranking numerically. decision_function retains ordering and is appropriate for ROC AUC. This repairs metric calculation, not calibration or platform shift.
+
+**Verification and limits.** Full execution reproduced mean outer AUC 0.998611 and complete held-out coverage. Both CV levels had zero patient overlap; metadata features and exact duplicate profiles were absent. One shuffled-label diagnostic averaged 0.461955, not a formal significance test. External score AUC is 0.993315, yet all 107 default predictions are tumour. Microarray values can lie thousands of training standard deviations away, so calibrated probabilities and default-threshold performance do not transfer. Candidate identities remain independently unverified. No external result was used to change the model.
+
+**Instructor questions.**
+1. Why nested grouped CV? Inner folds tune; outer folds evaluate on excluded candidate patients.
+2. Can AUC be high with all predictions tumour? Yes; AUC assesses rankings across thresholds, not one fixed threshold.
+3. Why use decision scores? They preserve ordering when probabilities round to 0 or 1.
+4. Is platform shift fixed? No; only the numerical loss of ranking is corrected.
+5. Are top coefficients causal biomarkers? No; they are model-dependent weights affected by scaling and correlated genes.

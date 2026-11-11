@@ -38,7 +38,15 @@ The report includes all linked RefSeq mRNA variants and prefers all exact review
 
 ## Assignment 3
 
-Not implemented yet; its directory is reserved for later work.
+Open assignment_3/rnaseq.ipynb in Jupyter with assignment_3/ as the working directory, then restart the kernel and run cells in order. The kernel needs pandas, NumPy, SciPy, statsmodels, scikit-learn, matplotlib, seaborn and umap-learn in addition to Jupyter. The root requirements currently cover Assignments 1-2 only.
+
+Keep the supplied GSE40419 expression file, both series matrices and GPL96_annotation.tsv in assignment_3/data/. No annotation download is performed by the notebook.
+
+Limitations:
+- Driver-mutation annotations are unavailable in the downloaded GSE40419 series matrix. Mutation-coloured visualisations and EGFR/KRAS association tests are omitted; available tissue/sex/smoking labels and smoking-cluster tests are used. Tumour stage is not substituted. This limitation was approved by the student, not confirmed by the teacher.
+- The 77 tumour-normal candidate pairs preserve full LC_C/LC_S names and have consistent available clinical metadata, but patient identities were not independently verified.
+- RNA-seq and microarray scales differ. External ROC AUC uses decision scores because probabilities saturated at 1.0. High ranking AUC does not imply calibrated probabilities or useful default-threshold classification: all 107 external samples were predicted as tumour. External results were not used to tune the model.
+
 
 ## Reference
 
